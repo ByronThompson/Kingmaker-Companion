@@ -1,0 +1,10 @@
+﻿/Kingmaker Companion/wwwroot/dist/
+/Kingmaker Companion/wwwroot/lib/
+/.idea/
+/Kingmaker Companion/node_modules/
+/Kingmaker Companion/bin/
+/Kingmaker Companion/obj/
+/Kingmaker Companion/ClientApp/node_modules
+/Kingmaker Companion/ClientApp/**/*.js
+/Kingmaker Companion/ClientApp/**/*.js.map
+
