@@ -6,5 +6,7 @@
 /Kingmaker Companion/obj/
 /Kingmaker Companion/ClientApp/node_modules
 /Kingmaker Companion/ClientApp/**/*.js
+!/Kingmaker Companion/ClientApp/webpack.config.js
+!/Kingmaker Companion/ClientApp/src/ts/tools.js
 /Kingmaker Companion/ClientApp/**/*.js.map
-
+/Kingmaker Companion/Globals.cs
