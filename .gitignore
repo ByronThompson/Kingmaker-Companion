@@ -10,3 +10,5 @@
 !/Kingmaker Companion/ClientApp/src/ts/tools.js
 /Kingmaker Companion/ClientApp/**/*.js.map
 /Kingmaker Companion/Globals.cs
+/Kingmaker Companion/Dockerfile
+/.dockerignore

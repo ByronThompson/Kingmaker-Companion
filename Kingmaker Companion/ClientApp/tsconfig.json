@@ -9,7 +9,8 @@
 
         // Rules for your code
         "strict": true,
-        "noImplicitAny": true,
+        "strictNullChecks": false,
+        "noImplicitAny": false,
         "noImplicitReturns": true,
         "noUnusedParameters": true,
         "noUnusedLocals": true,

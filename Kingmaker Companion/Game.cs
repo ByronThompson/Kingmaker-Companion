@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json.Linq;
 
 namespace Kingmaker_Companion;
 
 public class Game {
     public string GameId;
     public string KingdomId;
+
+    [JsonIgnore] 
+    public JObject kingdom;
     public List<Player> Players = new List<Player>();
 
     public Game(string gameId, string kingdomId) {

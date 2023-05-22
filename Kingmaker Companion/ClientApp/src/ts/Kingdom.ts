@@ -7,6 +7,11 @@ export class Kingdom{
     saveHexes: Array<SavableHex>;
     kingdomName: string = "Kingdom of Fair Weather"
     kingdomId: string;
+    
+    abilityScores: AbilityScores;
+    
+    charter: string = "Grant";
+    heartland: string = "ForestSwamp";
 
     constructor() {
         this.kingdomId = tools.guid();
@@ -72,6 +77,32 @@ export class Kingdom{
                 longRow = !longRow;
             }
         }
+        
+        this.abilityScores = new AbilityScores();
+        
+        this.calculateAbilities()
+    }
+    
+    calculateAbilities(){
+        let boosts = this.abilityScores.abilityBoosts;
+        
+        //Charter stage
+        let c = this.getCharter(this.charter)
+        boosts.stages[0].frees = c.abilityBoosts.filter((item: string) => item === 'free').length;
+        c.abilityBoosts.filter((item: string) => item != "free").forEach((item: string) => {
+            boosts.stages[0].boost.push(item);
+        });
+        boosts.stages[0].boost.push("-" + c.abilityFlaw);
+
+        //Heartland stage
+        let h = this.getHeartland(this.heartland)
+        boosts.stages[1].frees = h.abilityBoosts.filter((item: string) => item === 'free').length;
+        h.abilityBoosts.filter((item: string) => item != "free").forEach((item: string) => {
+            boosts.stages[1].boost.push(item);
+        })
+        
+        this.abilityScores.calculateScores();
+        
     }
 
     updateHexDisplay(){
@@ -100,7 +131,6 @@ export class Kingdom{
         let k: Kingdom = JSON.parse(save);
         
         for (let i = 0; i < this.hexes.length; i++) {
-            console.log(typeof k.saveHexes[i].claimed)
             this.hexes[i].explored = tools.stringToBool(k.saveHexes[i].explored);
             this.hexes[i].claimed = tools.stringToBool(k.saveHexes[i].claimed);
             this.hexes[i].index = i;
@@ -113,7 +143,6 @@ export class Kingdom{
     
     updateHex(index: number, property: string, state: string){
         let hex = this.hexes[index];
-        console.log(index, property, state)
         switch (property){
             case "claimed": hex.claimed = tools.stringToBool(state); break;
             case "explored": hex.explored = tools.stringToBool(state); break;
@@ -122,6 +151,26 @@ export class Kingdom{
         
         hex.updateDisplay();
     }
+    
+    private getCharter(charter: string){
+        switch (charter){
+            case "Conquest" : return JSON.parse(Charter.Conquest);
+            case "Expansion" : return JSON.parse(Charter.Expansion);
+            case "Exploration" : return JSON.parse(Charter.Exploration);
+            case "Grant" : return JSON.parse(Charter.Grant);
+            case "Open" : return JSON.parse(Charter.Open);
+        }
+    }
+
+    private getHeartland(heartland: string){
+        switch (heartland){
+            case "ForestSwamp" : return JSON.parse(Heartland.ForestSwamp);
+            case "HillPlain" : return JSON.parse(Heartland.HillPlain);
+            case "LakeRiver" : return JSON.parse(Heartland.LakeRiver);
+            case "MountainRuin" : return JSON.parse(Heartland.MountainRuin);
+        }
+    }
+    
 }
 
 class SavableHex{
@@ -132,6 +181,74 @@ class SavableHex{
         this.claimed = hex.claimed ? "true" : "false";
         this.explored = hex.explored ? "true" : "false";
     }
+}
+
+class AbilityScores{
+    culture: number = 10;
+    economy: number = 10;
+    loyalty: number = 10;
+    stability: number = 10;
+
+    abilityBoosts = {
+        "stages" : [
+            {"stage" : "Charter" ,"frees" : 0, "boost" : []},
+            {"stage" : "Heartland" ,"frees" : 0, "boost" : []},
+            {"stage" : "Level 1" ,"frees" : 2, "boost" : []},
+            {"stage" : "Level 5" ,"frees" : 2, "boost" : []},
+            {"stage" : "Level 10" ,"frees" : 2, "boost" : []},
+            {"stage" : "Level 15" ,"frees" : 2, "boost" : []},
+            {"stage" : "Level 20" ,"frees" : 2, "boost" : []},
+        ]};
+    
+    calculateScores(){
+        for(let i of this.abilityBoosts.stages){
+            console.log(i)
+            for(let j of i.boost){
+                console.log(j)
+                if(j.charAt(0) === "-") {
+                    this.modify(j.substring(1), false);
+                    continue;
+                }
+                
+                this.modify(j)
+                
+            }
+        }
+    }
+    
+    modify(score: string, boost: boolean = true){
+        switch (score){
+            case "culture" : this.culture = this.boost(this.culture, boost); break;
+            case "economy" : this.economy = this.boost(this.economy, boost); break;
+            case "loyalty" : this.loyalty = this.boost(this.loyalty, boost); break;
+            case "stability" : this.stability = this.boost(this.stability, boost); break;
+        }
+    }
+    
+    boost(score: number, boost: boolean): number{
+        if(score > 18){
+            return score + (1 * (boost ? 1 : -1));
+        }
+        
+        return score + (2 * (boost ? 1 : -1));
+    }
+}
+
+enum Charter {
+    Conquest= "{\"name\" : \"Conquest\" , \"abilityBoosts\" : [\"loyalty\" , \"free\"],  \"abilityFlaw\" : \"culture\"}",
+    Expansion = "{\"name\" : \"Expansion\" , \"abilityBoosts\" : [\"culture\" , \"free\"], \"abilityFlaw\" : \"stability\"}",
+    Exploration = "{\"name\" : \"Exploration\" , \"abilityBoosts\" : [\"stability\" , \"free\"], \"abilityFlaw\" : \"economy\"}",
+    Grant = "{\"name\" : \"Grant\" , \"abilityBoosts\" : [\"economy\" , \"free\"], \"abilityFlaw\" : \"loyalty\"}",
+    Open = "{\"name\" : \"Open\" , \"abilityBoosts\" : [\"free\"], \"abilityFlaw\" : \"none\"}"
+    
+}
+
+enum Heartland {
+    ForestSwamp = "{\"name\" : \"Forest or Swamp\" , \"abilityBoosts\" : [\"culture\"]}",
+    HillPlain = "{\"name\" : \"Hill or Plain\" , \"abilityBoosts\" : [\"loyalty\"]}",
+    LakeRiver = "{\"name\" : \"Lake or River\" , \"abilityBoosts\" : [\"economy\"]}",
+    MountainRuin = "{\"name\" : \"Mountain or Ruin\" , \"abilityBoosts\" : [\"stability\"]}"
+
 }
 
 

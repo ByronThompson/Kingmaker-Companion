@@ -10,14 +10,13 @@ import {
 import { Kingdom } from './Kingdom'
 import {Hex} from "./Hex";
 import {hubConnection} from "./index";
-let net = require('./network'); 
 
 let app: Application;
 let dragTarget: Sprite | null = null;
 let background: Sprite;
 let backAnc: Container;
 let viewMode: string = "claim";
-let kingdomData: any;
+let kingdomData: string;
 let kingdom: Kingdom;
 
 export async function CreateView(){
@@ -33,23 +32,20 @@ export async function CreateView(){
     let splits : string[] = window.location.pathname.split("/");
     let gameId : string = splits[3];
     
-    let kingdomId : string;
-    
-    await hubConnection.invoke("gameconnect", gameId).then(r => kingdomId = "kingdom:" +  r)
-        .then(() => {
-            Promise.all([net.sendAPIRequest("KingdomApi", kingdomId ?? "none"), Assets.load(window.location.origin + "/dist/Assets/Kingmaker-Stolen-Lands-Accurate-grid-no-labels.webp")])
-                .then(r => {
-                    kingdomData = r[0];
+    let mapURL : string = window.location.origin + "/Assets/Kingmaker-Stolen-Lands-Accurate-grid-no-labels.webp"
 
-                    background = Sprite.from(r[1]);
+    Promise.all([hubConnection.invoke("gameconnect", gameId), Assets.load(mapURL)])
+        .then(r => {
+            kingdomData = r[0];
+            console.log(kingdomData)
 
-                    init();
-                })
-                .catch(console.log);
-        });
+            background = Sprite.from(r[1]);
+
+            init();
+        })
+        .catch(console.log);
 }
 
-//@ts-ignore
 function init(): void{
 
     //Create Background image
@@ -99,11 +95,11 @@ function init(): void{
         .beginFill(0x650a5a, 0.25)
         .drawRoundedRect(50,660,100,100,16)
         .endFill());
-    btn3.on('pointertap', (() => {kingdom.updateHexDisplay()}));
+    btn3.on('pointertap', (() => {console.log(kingdom)}));
     btn3.interactive = true;
     
     kingdom = new Kingdom();
-    kingdom.loadSave(JSON.stringify(kingdomData))
+    kingdom.loadSave(kingdomData)
     
     addKingdomName();
     

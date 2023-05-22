@@ -39,6 +39,8 @@ module.exports = (env, argv) => {
 
         // Minify the code when making a final build
         optimization: {
+            minimize: false,
+            /*
             minimize: argv.mode === 'production',
             minimizer: [new TerserPlugin({
                 terserOptions: {
@@ -47,6 +49,7 @@ module.exports = (env, argv) => {
                     output: { comments: false, beautify: true },
                 },
             })],
+             */
         },
 
         // Explain webpack how to do Typescript
