@@ -1,0 +1,137 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+const app = require('../app');
+const debug = require('debug')('kingmaker-companion:server');
+const http = require('http');
+const socketIo = require('socket.io')
+
+/**
+ * Get port from environment and store in Express.
+ */
+const port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+const server = http.createServer(app);
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Create websocket handler
+ */
+const io = socketIo(server);
+
+/**
+ * Variable for storing SocketIO game rooms
+ */
+const gameRooms = {};
+
+registerSocketListeners(io)
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  const port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  const bind = typeof port === 'string'
+      ? 'Pipe ' + port
+      : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  const addr = server.address();
+  const bind = typeof addr === 'string'
+      ? 'pipe ' + addr
+      : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+
+function registerSocketListeners(io){
+  io.on('connection', (socket) => {
+    console.log('New connection:', socket.id);
+
+    // Join a game room
+    socket.on('joinGame', (gameId, callback) => {
+      socket.join(gameId);
+      if (!gameRooms[gameId]) {
+        gameRooms[gameId] = [];
+      }
+      gameRooms[gameId].push(socket.id);
+      console.log(`Socket ${socket.id} joined game ${gameId}`);
+      callback("Welcome!")
+    });
+
+    // Handle incoming messages
+    socket.on('gameMessage', (data) => {
+      const { gameId, message } = data;
+      io.to(gameId).emit('gameMessage', message);  // Broadcast to all players in the game room
+      console.log(`Message in game ${gameId}: ${message}`);
+    });
+
+    // Handle player disconnect
+    socket.on('disconnect', () => {
+      console.log('Player disconnected:', socket.id);
+      for (const gameId in gameRooms) {
+        const index = gameRooms[gameId].indexOf(socket.id);
+        if (index > -1) {
+          gameRooms[gameId].splice(index, 1);
+          io.to(gameId).emit('playerLeft', socket.id);
+          console.log(`Socket ${socket.id} left game ${gameId}`);
+        }
+      }
+    });
+  });
+}
